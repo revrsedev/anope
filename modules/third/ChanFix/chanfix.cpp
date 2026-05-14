@@ -248,8 +248,8 @@ public:
 			case Kind::Autofix:
 				cf.AutoFixTick();
 				break;
-		return true;
 		}
+		return true;
 	}
 
 private:
