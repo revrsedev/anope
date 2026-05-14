@@ -130,7 +130,7 @@ public:
 	Serializable* Unserialize(Serializable* obj, Serialize::Data& data) const override
 	{
 		Anope::string name;
-		data["name"] >> name;
+		data.TryLoad("name", name);
 		if (name.empty())
 			return nullptr;
 
@@ -148,24 +148,24 @@ public:
 				rec = new FeedChannelData(name);
 		}
 
-		data["updated"] >> rec->updated;
+		data.TryLoad("updated", rec->updated);
 
 		uint64_t feedcount = 0;
-		data["feedcount"] >> feedcount;
+		data.TryLoad("feedcount", feedcount);
 		rec->feeds.clear();
 		rec->feeds.reserve(static_cast<size_t>(feedcount));
 		for (uint64_t i = 0; i < feedcount; ++i)
 		{
 			FeedEntry f;
 			const Anope::string prefix = "feed" + Anope::ToString(i) + ".";
-			data[prefix + "url"] >> f.url;
-			data[prefix + "title"] >> f.title;
-			data[prefix + "last_item_id"] >> f.last_item_id;
-			data[prefix + "last_item_url"] >> f.last_item_url;
-			data[prefix + "last_item_title"] >> f.last_item_title;
-			data[prefix + "added_by"] >> f.added_by;
-			data[prefix + "added_at"] >> f.added_at;
-			data[prefix + "last_seen"] >> f.last_seen;
+			data.TryLoad(prefix + "url", f.url);
+			data.TryLoad(prefix + "title", f.title);
+			data.TryLoad(prefix + "last_item_id", f.last_item_id);
+			data.TryLoad(prefix + "last_item_url", f.last_item_url);
+			data.TryLoad(prefix + "last_item_title", f.last_item_title);
+			data.TryLoad(prefix + "added_by", f.added_by);
+			data.TryLoad(prefix + "added_at", f.added_at);
+			data.TryLoad(prefix + "last_seen", f.last_seen);
 			if (!f.url.empty())
 				rec->feeds.push_back(std::move(f));
 		}
@@ -195,7 +195,7 @@ public:
 	Serializable* Unserialize(Serializable* obj, Serialize::Data& data) const override
 	{
 		Anope::string name;
-		data["name"] >> name;
+		data.TryLoad("name", name);
 		if (name.empty())
 			return nullptr;
 
@@ -214,8 +214,8 @@ public:
 		}
 
 		st->name = name;
-		data["updated"] >> st->updated;
-		data["total_feeds"] >> st->total_feeds;
+		data.TryLoad("updated", st->updated);
+		data.TryLoad("total_feeds", st->total_feeds);
 		FeedsStateList->insert_or_assign(st->name, st);
 		return st;
 	}
@@ -233,19 +233,20 @@ class FeedsModule final
 
 	public:
 		DeferredSaveTimer(FeedsModule& owner, time_t seconds)
-			: Timer(&owner, seconds, true)
+			: Timer(&owner, seconds)
 			, fm(owner)
 		{
 		}
 
-		void Tick() override
+		bool Tick() override
 		{
 			if (!this->fm.db_save_pending)
-				return;
+				return false;
 			if (!Me || !Me->IsSynced())
-				return;
+				return true;
 			this->fm.db_save_pending = false;
 			Anope::SaveDatabases();
+			return false;
 		}
 	};
 
@@ -267,14 +268,15 @@ class FeedsModule final
 
 	public:
 		FeedsPollTimer(FeedsModule& owner, time_t seconds)
-			: Timer(&owner, seconds, true)
+			: Timer(&owner, seconds)
 			, fm(owner)
 		{
 		}
 
-		void Tick() override
+		bool Tick() override
 		{
 			this->fm.PollTick();
+			return true;
 		}
 	};
 

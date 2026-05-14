@@ -229,13 +229,13 @@ public:
 	};
 
 	ChanFixTimer(Module* owner, ChanFixCore& core, time_t seconds, Kind kind)
-		: Timer(owner, seconds, true)
+		: Timer(owner, seconds)
 		, cf(core)
 		, k(kind)
 	{
 	}
 
-	void Tick() override
+	bool Tick() override
 	{
 		switch (this->k)
 		{
@@ -248,6 +248,7 @@ public:
 			case Kind::Autofix:
 				cf.AutoFixTick();
 				break;
+		return true;
 		}
 	}
 

@@ -653,7 +653,7 @@ public:
     Serializable *Unserialize(Serializable *obj, Serialize::Data &data) const override
     {
         Anope::string account;
-        data["account"] >> account;
+        data.TryLoad("account", account);
         if (account.empty())
             return nullptr;
 
@@ -670,8 +670,8 @@ public:
         }
 
         v->account = account;
-        data["scram_sha512_verifier"] >> v->scram_sha512_verifier;
-        data["scram_sha256_verifier"] >> v->scram_sha256_verifier;
+        data.TryLoad("scram_sha512_verifier", v->scram_sha512_verifier);
+        data.TryLoad("scram_sha256_verifier", v->scram_sha256_verifier);
         return v;
     }
 };
